@@ -1,0 +1,32 @@
+name: Validate Server Platform
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-compose:
+    name: Check Docker Compose configuration
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Validate Compose file
+        run: docker compose -f compose.yaml config --quiet
+
+      - name: Check required platform files
+        run: |
+          test -f Caddyfile
+          test -f README.md
+          test -f SECURITY.md
+          test -f apps/README.md
+          test -f scripts/start.sh
+          test -f scripts/stop.sh
+          test -f scripts/status.sh
