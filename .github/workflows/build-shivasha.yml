@@ -1,0 +1,48 @@
+name: Build SHIVASHA Container Stack
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  build-shivasha:
+    name: Validate and build SHIVASHA Docker images
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out server platform
+        uses: actions/checkout@v4
+
+      - name: Check out SHIVASHA source
+        uses: actions/checkout@v4
+        with:
+          repository: devops-saurabhpandey/shivasha
+          ref: main
+          path: apps/shivasha
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate SHIVASHA Compose configuration
+        working-directory: apps/shivasha
+        env:
+          JWT_SECRET: ci-only-not-for-production
+          MONGODB_URI: mongodb://mongo:27017/shivasha
+          FRONTEND_URL: http://localhost:18080
+          SHIVASHA_PORT: "18080"
+        run: docker compose -f docker-compose.yml config --quiet
+
+      - name: Build SHIVASHA frontend and backend images
+        working-directory: apps/shivasha
+        env:
+          JWT_SECRET: ci-only-not-for-production
+          MONGODB_URI: mongodb://mongo:27017/shivasha
+          FRONTEND_URL: http://localhost:18080
+          SHIVASHA_PORT: "18080"
+        run: docker compose -f docker-compose.yml build
+
+      - name: Report scope
+        run: echo "Build validation complete. This workflow does not host or deploy the app to a 24/7 server."
