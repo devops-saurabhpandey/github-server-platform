@@ -1,0 +1,12 @@
+{
+    admin off
+    auto_https off
+}
+
+http://portainer.localhost {
+    reverse_proxy portainer:9000
+}
+
+http://status.localhost {
+    reverse_proxy uptime-kuma:3001
+}
