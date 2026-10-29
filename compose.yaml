@@ -1,0 +1,48 @@
+name: github-server-platform
+
+services:
+  caddy:
+    image: caddy:2-alpine
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-80}:80"
+      - "${HTTPS_PORT:-443}:443"
+    volumes:
+      - ./Caddyfile:/etc/caddy/Caddyfile:ro
+      - caddy_data:/data
+      - caddy_config:/config
+    networks:
+      - platform_proxy
+
+  portainer:
+    image: portainer/portainer-ce:latest
+    restart: unless-stopped
+    command: -H unix:///var/run/docker.sock
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - portainer_data:/data
+    expose:
+      - "9000"
+    networks:
+      - platform_proxy
+    # Do not publish 9000 directly to the public internet.
+
+  uptime-kuma:
+    image: louislam/uptime-kuma:2
+    restart: unless-stopped
+    volumes:
+      - uptime_kuma_data:/app/data
+    expose:
+      - "3001"
+    networks:
+      - platform_proxy
+
+networks:
+  platform_proxy:
+    name: github_platform_proxy
+
+volumes:
+  caddy_data:
+  caddy_config:
+  portainer_data:
+  uptime_kuma_data:
