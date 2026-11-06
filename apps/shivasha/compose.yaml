@@ -1,0 +1,35 @@
+name: shivasha-database
+
+services:
+  mongo:
+    image: mongo:8.0
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_ROOT_USERNAME:?Set MONGO_ROOT_USERNAME in .env}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?Set MONGO_ROOT_PASSWORD in .env}
+      MONGO_INITDB_DATABASE: ${MONGO_APP_DATABASE:?Set MONGO_APP_DATABASE in .env}
+      MONGO_APP_USERNAME: ${MONGO_APP_USERNAME:?Set MONGO_APP_USERNAME in .env}
+      MONGO_APP_PASSWORD: ${MONGO_APP_PASSWORD:?Set MONGO_APP_PASSWORD in .env}
+    volumes:
+      - shivasha_mongo_data:/data/db
+      - ./init/01-create-app-user.js:/docker-entrypoint-initdb.d/01-create-app-user.js:ro
+    networks:
+      - shivasha_data
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - 'mongosh --quiet --username "$$MONGO_INITDB_ROOT_USERNAME" --password "$$MONGO_INITDB_ROOT_PASSWORD" --authenticationDatabase admin --eval "db.adminCommand({ ping: 1 }).ok" | grep 1'
+      interval: 15s
+      timeout: 10s
+      retries: 5
+      start_period: 30s
+    # No host port is published. Only services on shivasha_data can reach MongoDB.
+
+networks:
+  shivasha_data:
+    name: shivasha_data
+    internal: true
+
+volumes:
+  shivasha_mongo_data:
+    name: shivasha_mongo_data
